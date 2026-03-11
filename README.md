@@ -18,15 +18,16 @@ The workflow can also be executed through GitHub Actions using stored
 repository secrets.
 
 ## Project Structure
+.
+├── tiktok_test.py
+├── requirements.txt
+└── .github
+└── workflows
+└── tiktok-test.yml
 
-. ├── tiktok_test.py ├── requirements.txt └── .github └── workflows └──
-tiktok-test.yml
-
--   tiktok_test.py -- Python script that authenticates and queries the
-    TikTok API
--   requirements.txt -- Python dependencies required to run the script
--   .github/workflows/tiktok-test.yml -- GitHub Actions workflow used to
-    run the test manually
+- `tiktok_test.py` – Python script that authenticates with TikTok and queries the Ad Library API.
+- `requirements.txt` – Python dependencies required to run the script.
+- `.github/workflows/tiktok-test.yml` – GitHub Actions workflow used to manually run the API test.
 
 ## Requirements
 
