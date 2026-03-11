@@ -1,0 +1,53 @@
+name: TikTok API Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-api:
+    name: Run TikTok API Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify environment
+        run: |
+          python --version
+          pip --version
+
+      - name: Validate secrets
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+        run: |
+          if [ -z "$TIKTOK_CLIENT_KEY" ]; then
+            echo "Missing TIKTOK_CLIENT_KEY secret"
+            exit 1
+          fi
+
+          if [ -z "$TIKTOK_CLIENT_SECRET" ]; then
+            echo "Missing TIKTOK_CLIENT_SECRET secret"
+            exit 1
+          fi
+
+      - name: Run TikTok API test
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+        run: |
+          set -e
+          python tiktok_test.py
