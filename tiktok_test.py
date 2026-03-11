@@ -27,7 +27,7 @@ TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 
 # TikTok Research Ad Library endpoint
 # The 'fields' parameter must be provided in the query string
-AD_API_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad,ad_group"
+AD_API_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad"
 
 # ------------------------------------------------------------------
 # LOAD API CREDENTIALS FROM ENVIRONMENT VARIABLES
