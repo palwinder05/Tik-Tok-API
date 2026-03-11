@@ -1,44 +1,47 @@
 #!/usr/bin/env python3
 
 """
-TikTok Research Ad Library API Test Script
+Simple TikTok API Test Script
 
-This script demonstrates how to authenticate with the TikTok API using
-client credentials and retrieve advertisement data from the TikTok
-Research Ad Library endpoint.
+This script demonstrates a basic workflow for interacting with the
+TikTok Research Ad Library API.
 
-Workflow of the script:
-1. Request an OAuth access token from TikTok.
-2. Use the access token to authenticate API requests.
-3. Send a query request to the TikTok Ad Library API.
-4. Print the API response for inspection.
+Steps performed:
+1. Request an access token from TikTok using client credentials.
+2. Use the access token to send a request to the Ad Library API.
+3. Print the response returned by the API.
+
+The goal of this script is only to test the API and inspect the data.
 """
 
 import os
 import json
 import requests
 
-# ------------------------------------------------------------------
-# API ENDPOINTS
-# ------------------------------------------------------------------
 
-# OAuth endpoint used to request an access token
+# -----------------------------------------------------------
+# STEP 1: DEFINE API ENDPOINTS
+# -----------------------------------------------------------
+
+# Endpoint used to request an OAuth access token
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 
-# TikTok Research Ad Library endpoint
-# The 'fields' parameter must be provided in the query string
+# Endpoint used to query the TikTok Research Ad Library
+# The 'fields' parameter tells the API what information we want returned
 AD_API_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad"
 
-# ------------------------------------------------------------------
-# LOAD API CREDENTIALS FROM ENVIRONMENT VARIABLES
-# ------------------------------------------------------------------
+
+# -----------------------------------------------------------
+# STEP 2: READ API CREDENTIALS FROM ENVIRONMENT VARIABLES
+# -----------------------------------------------------------
 
 """
-The API credentials are not stored directly in the script for security reasons.
-Instead, they are loaded from environment variables.
+For security reasons, the client key and secret are not stored
+directly inside the script.
 
-When running locally or in GitHub Actions, these variables must be set:
+Instead, they are read from environment variables.
 
+Required variables:
 TIKTOK_CLIENT_KEY
 TIKTOK_CLIENT_SECRET
 """
@@ -47,159 +50,125 @@ CLIENT_KEY = os.getenv("TIKTOK_CLIENT_KEY")
 CLIENT_SECRET = os.getenv("TIKTOK_CLIENT_SECRET")
 
 
-# ------------------------------------------------------------------
-# FUNCTION: REQUEST ACCESS TOKEN
-# ------------------------------------------------------------------
+# -----------------------------------------------------------
+# STEP 3: FUNCTION TO GET ACCESS TOKEN
+# -----------------------------------------------------------
 
 def get_access_token():
     """
-    Requests an OAuth access token from the TikTok API.
+    This function sends a request to TikTok's OAuth API to obtain
+    an access token.
 
-    The TikTok API requires authentication before accessing protected
-    endpoints. This function sends a POST request to the OAuth token
-    endpoint using the client credentials grant type.
-
-    Returns:
-        str: Access token if successful
-        None: If authentication fails
+    The token is required to authenticate all future API requests.
     """
 
+    # Data sent to TikTok to request the token
     payload = {
         "client_key": CLIENT_KEY,
         "client_secret": CLIENT_SECRET,
-        "grant_type": "client_credentials",
+        "grant_type": "client_credentials"
     }
 
+    # Required request header
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    # Send POST request to obtain access token
-    response = requests.post(
-        TOKEN_URL,
-        data=payload,
-        headers=headers,
-        timeout=30
-    )
+    # Send POST request to TikTok
+    response = requests.post(TOKEN_URL, data=payload, headers=headers)
 
-    # Check if request was successful
+    # Print error if authentication fails
     if response.status_code != 200:
         print("Token request failed")
         print(response.text)
         return None
 
     # Extract token from JSON response
-    token = response.json().get("access_token")
+    token = response.json()["access_token"]
 
     print("Access token received")
 
     return token
 
 
-# ------------------------------------------------------------------
-# FUNCTION: QUERY TIKTOK AD LIBRARY
-# ------------------------------------------------------------------
+# -----------------------------------------------------------
+# STEP 4: FUNCTION TO REQUEST AD DATA
+# -----------------------------------------------------------
 
-def fetch_ads(access_token):
+def fetch_ads(token):
     """
-    Queries the TikTok Research Ad Library API.
+    This function queries the TikTok Ad Library API.
 
-    This function sends a POST request to retrieve advertisement data.
-    Filters are applied to limit the results to a specific country
-    and date range.
-
-    Parameters:
-        access_token (str): OAuth token obtained from TikTok
-
-    Returns:
-        dict: JSON response from the API
-        None: If the request fails
+    The access token is passed in the request header
+    to prove the request is authenticated.
     """
 
+    # Authorization header containing the access token
     headers = {
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
 
-    """
-    The payload defines filters and request parameters.
-
-    filters:
-        Limits results to specific ads.
-
-    ad_published_date_range:
-        Filters ads published between two dates.
-
-    country:
-        Limits ads to a specific geographic region.
-
-    max_count:
-        Limits how many results are returned per request.
-        TikTok allows a maximum of 50.
-    """
-
+    # Filters help limit which ads are returned
     payload = {
         "filters": {
             "ad_published_date_range": {
-                "min": "20251001",
-                "max": "20260224"
+                "min": "20240101",
+                "max": "20251231"
             },
             "country": "CA"
         },
+
+        # Limits how many ads are returned in a single request
         "max_count": 20
     }
 
-    # Send POST request to TikTok Ad Library API
-    response = requests.post(
-        AD_API_URL,
-        json=payload,
-        headers=headers,
-        timeout=30
-    )
+    # Send request to the TikTok Ad Library API
+    response = requests.post(AD_API_URL, json=payload, headers=headers)
 
-    # Print status code for debugging
+    # Print HTTP status code
     print("Status Code:", response.status_code)
 
-    # Print raw response text for inspection
+    # Print the raw API response for debugging
     print(response.text)
 
-    # If request failed, return None
+    # Stop if the request failed
     if response.status_code != 200:
         return None
 
-    # Convert API response to JSON
+    # Convert response into JSON format
     return response.json()
 
 
-# ------------------------------------------------------------------
-# MAIN PROGRAM EXECUTION
-# ------------------------------------------------------------------
+# -----------------------------------------------------------
+# STEP 5: MAIN PROGRAM
+# -----------------------------------------------------------
 
 def main():
     """
-    Main execution function for the script.
+    Main program execution.
 
-    Steps:
-    1. Request access token
-    2. If successful, query the TikTok Ad Library
-    3. Print formatted JSON response
+    The program:
+    1. Gets an access token
+    2. Uses the token to query ad data
+    3. Prints the results
     """
 
-    # Step 1: Authenticate with TikTok
+    # Request authentication token
     token = get_access_token()
 
-    if not token:
-        print("Token generation failed")
+    if token is None:
+        print("Authentication failed")
         return
 
-    # Step 2: Query advertisement data
+    # Request advertisement data
     data = fetch_ads(token)
 
-    # Step 3: Print formatted results
     if data:
+        print("\nFormatted API Response:\n")
         print(json.dumps(data, indent=2))
 
 
-# Run the script only when executed directly
+# Run the program
 if __name__ == "__main__":
     main()
